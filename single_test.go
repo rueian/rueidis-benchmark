@@ -32,7 +32,7 @@ func BenchmarkSingleClient(b *testing.B) {
 	var (
 		ctx          = context.Background()
 		address      = "127.0.0.1:6379"
-		parallelisms = []int{1, 8, 64}
+		parallelisms = []int{1, 8, 64, 128}
 		KeySizes     = []int{16}
 		valSizes     = []int{64, 256, 1024}
 		builders     = []TargetBuilder{
