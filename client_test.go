@@ -2,11 +2,12 @@ package rueidis_benchmark
 
 import (
 	"context"
-	"github.com/go-redis/redis/v8"
-	"github.com/rueian/rueidis"
 	"runtime"
 	"testing"
 	"time"
+
+	"github.com/go-redis/redis/v8"
+	"github.com/rueian/rueidis"
 )
 
 func BenchmarkSingleClientSet(b *testing.B) {
@@ -26,9 +27,6 @@ func BenchmarkSingleClientSet(b *testing.B) {
 						return Target{}, err
 					}
 					if err := client.Do(ctx, client.Cmd.Flushall().Build()).Error(); err != nil {
-						return Target{}, err
-					}
-					if err := client.Do(ctx, client.Cmd.ConfigSet().ParameterValue().ParameterValue("save", "").Build()).Error(); err != nil {
 						return Target{}, err
 					}
 					return Target{

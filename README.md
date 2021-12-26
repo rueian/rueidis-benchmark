@@ -8,11 +8,11 @@ It is even able to achieve ~14x throughput over go-redis in a local benchmark. (
 
 ## Redis SET
 
-![single client](./client_test_set.png)
+![client_test_set](./client_test_set.png)
 
 ```shell
 # run redis-server 6.2.6 at 127.0.0.1:6379
-▶ ./redis-server
+▶ ./redis-server --save "" --appendonly no
 ▶ go test -bench=BenchmarkSingleClientSet -benchmem .
 goos: darwin
 goarch: arm64
@@ -43,11 +43,11 @@ ok  	rueidis-benchmark	29.588s
 
 Rueidis supports Redis 6 server-assisted client side caching. It is able to get more throughput if cache hit.
 
-![single client](./client_test_get_2.png)
+![client_test_get](./client_test_get_2.png)
 
 ```shell
 # run redis-server 6.2.6 at 127.0.0.1:6379
-▶ ./redis-server
+▶ ./redis-server --save "" --appendonly no
 ▶ go test -bench=BenchmarkSingleClientGet -benchmem .
 goos: darwin
 goarch: arm64
@@ -82,3 +82,39 @@ BenchmarkSingleClientGet/GoRedis-parallelism(64)-key(16)-value(1024)-10         
 PASS
 ok  	rueidis-benchmark	46.749s
 ```
+
+## Redis Cluster GET
+
+![cluster_test_set](./cluster_test_set.png)
+
+```shell
+▶ ./redis-server --port 7001 --save "" --appendonly no --cluster-enabled yes --cluster-config-file 7001.conf
+▶ ./redis-server --port 7002 --save "" --appendonly no --cluster-enabled yes --cluster-config-file 7002.conf
+▶ ./redis-server --port 7003 --save "" --appendonly no --cluster-enabled yes --cluster-config-file 7003.conf
+▶ ./redis-cli --cluster create 127.0.0.1:7001 127.0.0.1:7002 127.0.0.1:7003 --cluster-yes
+▶ go test -bench=BenchmarkClusterClientSet -benchmem .
+goos: darwin
+goarch: arm64
+pkg: rueidis-benchmark
+BenchmarkClusterClientSet/Rueidis-parallelism(1)-key(16)-value(64)-10         	  215830	      5557 ns/op	     128 B/op	       4 allocs/op
+BenchmarkClusterClientSet/GoRedis-parallelism(1)-key(16)-value(64)-10         	  176012	      6223 ns/op	     281 B/op	       8 allocs/op
+BenchmarkClusterClientSet/Rueidis-parallelism(1)-key(16)-value(256)-10        	  176264	      6719 ns/op	     133 B/op	       5 allocs/op
+BenchmarkClusterClientSet/GoRedis-parallelism(1)-key(16)-value(256)-10        	  193083	      6861 ns/op	     281 B/op	       8 allocs/op
+BenchmarkClusterClientSet/Rueidis-parallelism(1)-key(16)-value(1024)-10       	  162326	      6494 ns/op	     140 B/op	       5 allocs/op
+BenchmarkClusterClientSet/GoRedis-parallelism(1)-key(16)-value(1024)-10       	  166094	      7031 ns/op	     281 B/op	       8 allocs/op
+BenchmarkClusterClientSet/Rueidis-parallelism(8)-key(16)-value(64)-10         	  455070	      3367 ns/op	     128 B/op	       4 allocs/op
+BenchmarkClusterClientSet/GoRedis-parallelism(8)-key(16)-value(64)-10         	   88596	     11576 ns/op	     306 B/op	       8 allocs/op
+BenchmarkClusterClientSet/Rueidis-parallelism(8)-key(16)-value(256)-10        	  504996	      3098 ns/op	     129 B/op	       5 allocs/op
+BenchmarkClusterClientSet/GoRedis-parallelism(8)-key(16)-value(256)-10        	  114231	     11106 ns/op	     300 B/op	       8 allocs/op
+BenchmarkClusterClientSet/Rueidis-parallelism(8)-key(16)-value(1024)-10       	  462561	      3509 ns/op	     132 B/op	       5 allocs/op
+BenchmarkClusterClientSet/GoRedis-parallelism(8)-key(16)-value(1024)-10       	   94317	     13796 ns/op	     303 B/op	       8 allocs/op
+BenchmarkClusterClientSet/Rueidis-parallelism(64)-key(16)-value(64)-10        	  397418	      2743 ns/op	     129 B/op	       4 allocs/op
+BenchmarkClusterClientSet/GoRedis-parallelism(64)-key(16)-value(64)-10        	  122091	     16077 ns/op	     378 B/op	       8 allocs/op
+BenchmarkClusterClientSet/Rueidis-parallelism(64)-key(16)-value(256)-10       	  411537	      2707 ns/op	     132 B/op	       5 allocs/op
+BenchmarkClusterClientSet/GoRedis-parallelism(64)-key(16)-value(256)-10       	  134432	     15804 ns/op	     383 B/op	       8 allocs/op
+BenchmarkClusterClientSet/Rueidis-parallelism(64)-key(16)-value(1024)-10      	  432090	      2651 ns/op	     130 B/op	       5 allocs/op
+BenchmarkClusterClientSet/GoRedis-parallelism(64)-key(16)-value(1024)-10      	   89550	     14892 ns/op	     421 B/op	       8 allocs/op
+PASS
+ok  	rueidis-benchmark	31.683s
+```
+

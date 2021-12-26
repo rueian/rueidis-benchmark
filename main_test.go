@@ -26,6 +26,7 @@ type TargetBuilder struct {
 
 func gen(n int) string {
 	sb := strings.Builder{}
+	sb.Grow(n)
 	for i := 0; i < n; i++ {
 		sb.WriteByte(byte(rand.Intn(26) + 'a'))
 	}
