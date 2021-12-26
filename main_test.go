@@ -2,9 +2,10 @@ package rueidis_benchmark
 
 import (
 	"fmt"
-	"math/rand"
 	"strings"
 	"testing"
+
+	"github.com/valyala/fastrand"
 )
 
 type Benchmark struct {
@@ -28,7 +29,7 @@ func gen(n int) string {
 	sb := strings.Builder{}
 	sb.Grow(n)
 	for i := 0; i < n; i++ {
-		sb.WriteByte(byte(rand.Intn(26) + 'a'))
+		sb.WriteByte(byte(fastrand.Uint32n(26) + 'a'))
 	}
 	return sb.String()
 }

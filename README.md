@@ -85,7 +85,7 @@ ok  	rueidis-benchmark	46.749s
 
 ## Redis Cluster GET
 
-![cluster_test_set](./cluster_test_set_2.png)
+![cluster_test_set](./cluster_test_set_3.png)
 
 ```shell
 ▶ ./redis-server --port 7001 --save "" --appendonly no --cluster-enabled yes --cluster-config-file 7001.conf
@@ -96,25 +96,25 @@ ok  	rueidis-benchmark	46.749s
 goos: darwin
 goarch: arm64
 pkg: rueidis-benchmark
-BenchmarkClusterClientSet/Rueidis-parallelism(1)-key(16)-value(64)-10         	  461911	      4415 ns/op	     112 B/op	       3 allocs/op
-BenchmarkClusterClientSet/GoRedis-parallelism(1)-key(16)-value(64)-10         	  482838	      5186 ns/op	     264 B/op	       7 allocs/op
-BenchmarkClusterClientSet/Rueidis-parallelism(1)-key(16)-value(256)-10        	  504906	      4665 ns/op	     115 B/op	       4 allocs/op
-BenchmarkClusterClientSet/GoRedis-parallelism(1)-key(16)-value(256)-10        	  489997	      5195 ns/op	     264 B/op	       7 allocs/op
-BenchmarkClusterClientSet/Rueidis-parallelism(1)-key(16)-value(1024)-10       	  408656	      5230 ns/op	     117 B/op	       4 allocs/op
-BenchmarkClusterClientSet/GoRedis-parallelism(1)-key(16)-value(1024)-10       	  485376	      5089 ns/op	     264 B/op	       7 allocs/op
-BenchmarkClusterClientSet/Rueidis-parallelism(8)-key(16)-value(64)-10         	 1556428	      1542 ns/op	     109 B/op	       3 allocs/op
-BenchmarkClusterClientSet/GoRedis-parallelism(8)-key(16)-value(64)-10         	  325666	      7907 ns/op	     271 B/op	       7 allocs/op
-BenchmarkClusterClientSet/Rueidis-parallelism(8)-key(16)-value(256)-10        	 1528384	      1599 ns/op	     112 B/op	       4 allocs/op
-BenchmarkClusterClientSet/GoRedis-parallelism(8)-key(16)-value(256)-10        	  398390	      7930 ns/op	     269 B/op	       7 allocs/op
-BenchmarkClusterClientSet/Rueidis-parallelism(8)-key(16)-value(1024)-10       	 1055851	      2127 ns/op	     114 B/op	       4 allocs/op
-BenchmarkClusterClientSet/GoRedis-parallelism(8)-key(16)-value(1024)-10       	  267501	      8469 ns/op	     272 B/op	       7 allocs/op
-BenchmarkClusterClientSet/Rueidis-parallelism(64)-key(16)-value(64)-10        	 2065417	       988.5 ns/op	     109 B/op	       3 allocs/op
-BenchmarkClusterClientSet/GoRedis-parallelism(64)-key(16)-value(64)-10        	  306484	     17696 ns/op	     318 B/op	       7 allocs/op
-BenchmarkClusterClientSet/Rueidis-parallelism(64)-key(16)-value(256)-10       	 2063487	      1172 ns/op	     112 B/op	       4 allocs/op
-BenchmarkClusterClientSet/GoRedis-parallelism(64)-key(16)-value(256)-10       	  277238	     17269 ns/op	     326 B/op	       7 allocs/op
-BenchmarkClusterClientSet/Rueidis-parallelism(64)-key(16)-value(1024)-10      	 1333504	      1700 ns/op	     113 B/op	       4 allocs/op
-BenchmarkClusterClientSet/GoRedis-parallelism(64)-key(16)-value(1024)-10      	  255465	     17740 ns/op	     325 B/op	       7 allocs/op
+BenchmarkClusterClientSet/Rueidis-parallelism(1)-key(16)-value(64)-10         	  494546	      4474 ns/op	     112 B/op	       3 allocs/op
+BenchmarkClusterClientSet/GoRedis-parallelism(1)-key(16)-value(64)-10         	  496608	      5006 ns/op	     264 B/op	       7 allocs/op
+BenchmarkClusterClientSet/Rueidis-parallelism(1)-key(16)-value(256)-10        	  487437	      4563 ns/op	     115 B/op	       4 allocs/op
+BenchmarkClusterClientSet/GoRedis-parallelism(1)-key(16)-value(256)-10        	  479134	      4891 ns/op	     264 B/op	       7 allocs/op
+BenchmarkClusterClientSet/Rueidis-parallelism(1)-key(16)-value(1024)-10       	  440024	      4799 ns/op	     116 B/op	       4 allocs/op
+BenchmarkClusterClientSet/GoRedis-parallelism(1)-key(16)-value(1024)-10       	  457611	      5369 ns/op	     264 B/op	       7 allocs/op
+BenchmarkClusterClientSet/Rueidis-parallelism(8)-key(16)-value(64)-10         	 1290128	      1779 ns/op	     109 B/op	       3 allocs/op
+BenchmarkClusterClientSet/GoRedis-parallelism(8)-key(16)-value(64)-10         	  328870	      8294 ns/op	     271 B/op	       7 allocs/op
+BenchmarkClusterClientSet/Rueidis-parallelism(8)-key(16)-value(256)-10        	 1209879	      1941 ns/op	     113 B/op	       4 allocs/op
+BenchmarkClusterClientSet/GoRedis-parallelism(8)-key(16)-value(256)-10        	  373011	      9009 ns/op	     270 B/op	       7 allocs/op
+BenchmarkClusterClientSet/Rueidis-parallelism(8)-key(16)-value(1024)-10       	 1247076	      1885 ns/op	     113 B/op	       4 allocs/op
+BenchmarkClusterClientSet/GoRedis-parallelism(8)-key(16)-value(1024)-10       	  258309	      8492 ns/op	     273 B/op	       7 allocs/op
+BenchmarkClusterClientSet/Rueidis-parallelism(64)-key(16)-value(64)-10        	 2593460	       933.3 ns/op	     108 B/op	       3 allocs/op
+BenchmarkClusterClientSet/GoRedis-parallelism(64)-key(16)-value(64)-10        	  321098	     17308 ns/op	     314 B/op	       7 allocs/op
+BenchmarkClusterClientSet/Rueidis-parallelism(64)-key(16)-value(256)-10       	 2109002	      1028 ns/op	     112 B/op	       4 allocs/op
+BenchmarkClusterClientSet/GoRedis-parallelism(64)-key(16)-value(256)-10       	  259333	     17301 ns/op	     319 B/op	       7 allocs/op
+BenchmarkClusterClientSet/Rueidis-parallelism(64)-key(16)-value(1024)-10      	 1384227	      1853 ns/op	     112 B/op	       4 allocs/op
+BenchmarkClusterClientSet/GoRedis-parallelism(64)-key(16)-value(1024)-10      	  273987	     18146 ns/op	     321 B/op	       7 allocs/op
 PASS
-ok  	rueidis-benchmark	66.626s
+ok  	rueidis-benchmark	70.166s
 ```
 

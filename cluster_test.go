@@ -2,12 +2,12 @@ package rueidis_benchmark
 
 import (
 	"context"
-	"math/rand"
 	"runtime"
 	"testing"
 
 	"github.com/go-redis/redis/v8"
 	"github.com/rueian/rueidis"
+	"github.com/valyala/fastrand"
 )
 
 func BenchmarkClusterClientSet(b *testing.B) {
@@ -33,7 +33,7 @@ func BenchmarkClusterClientSet(b *testing.B) {
 					return Target{
 						Close: func() { client.Close() },
 						Do: func(keys []string, value string) error {
-							return client.Do(ctx, client.Cmd.Set().Key(keys[rand.Intn(len(keys))]).Value(value).Build()).Error()
+							return client.Do(ctx, client.Cmd.Set().Key(keys[fastrand.Uint32n(uint32(len(keys)))]).Value(value).Build()).Error()
 						},
 					}, nil
 				},
@@ -48,7 +48,7 @@ func BenchmarkClusterClientSet(b *testing.B) {
 					return Target{
 						Close: func() { client.Close() },
 						Do: func(keys []string, value string) error {
-							return client.Set(ctx, keys[rand.Intn(len(keys))], value, 0).Err()
+							return client.Set(ctx, keys[fastrand.Uint32n(uint32(len(keys)))], value, 0).Err()
 						},
 					}, nil
 				},
