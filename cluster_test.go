@@ -2,6 +2,7 @@ package rueidis_benchmark
 
 import (
 	"context"
+	"math/rand"
 	"runtime"
 	"testing"
 
@@ -16,6 +17,7 @@ func BenchmarkClusterClientSet(b *testing.B) {
 		addresses    = []string{"127.0.0.1:7001", "127.0.0.1:7002", "127.0.0.1:7003"}
 		parallelisms = []int{1, 8, 64}
 		keySizes     = []int{16}
+		numKeys      = 1024
 		valSizes     = []int{64, 256, 1024}
 		builders     = []TargetBuilder{
 			{
@@ -30,8 +32,8 @@ func BenchmarkClusterClientSet(b *testing.B) {
 					}
 					return Target{
 						Close: func() { client.Close() },
-						Do: func(key, value string) error {
-							return client.Do(ctx, client.Cmd.Set().Key(gen(len(key))).Value(value).Build()).Error()
+						Do: func(keys []string, value string) error {
+							return client.Do(ctx, client.Cmd.Set().Key(keys[rand.Intn(len(keys))]).Value(value).Build()).Error()
 						},
 					}, nil
 				},
@@ -45,8 +47,8 @@ func BenchmarkClusterClientSet(b *testing.B) {
 					}
 					return Target{
 						Close: func() { client.Close() },
-						Do: func(key, value string) error {
-							return client.Set(ctx, gen(len(key)), value, 0).Err()
+						Do: func(keys []string, value string) error {
+							return client.Set(ctx, keys[rand.Intn(len(keys))], value, 0).Err()
 						},
 					}, nil
 				},
@@ -54,5 +56,5 @@ func BenchmarkClusterClientSet(b *testing.B) {
 		}
 	)
 
-	RunBenchmark(b, compose(parallelisms, keySizes, valSizes, builders))
+	RunBenchmark(b, compose(parallelisms, keySizes, valSizes, numKeys, builders))
 }

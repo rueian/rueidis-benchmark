@@ -9,14 +9,14 @@ import (
 
 type Benchmark struct {
 	Parallelism   int
-	Key           string
+	Keys          []string
 	Val           string
 	TargetBuilder TargetBuilder
 }
 
 type Target struct {
 	Close func()
-	Do    func(key, value string) error
+	Do    func(keys []string, value string) error
 }
 
 type TargetBuilder struct {
@@ -33,18 +33,26 @@ func gen(n int) string {
 	return sb.String()
 }
 
-func compose(parallelisms, keySizes, valSizes []int, builders []TargetBuilder) []Benchmark {
+func gens(s, n int) (gs []string) {
+	gs = make([]string, n)
+	for i := range gs {
+		gs[i] = gen(s)
+	}
+	return gs
+}
+
+func compose(parallelisms, keySizes, valSizes []int, numKeys int, builders []TargetBuilder) []Benchmark {
 	benchmarks := make([]Benchmark, 0, len(parallelisms)*len(keySizes)*len(valSizes)*len(builders))
 
 	for _, p := range parallelisms {
 		for _, k := range keySizes {
-			key := gen(k)
+			keys := gens(k, numKeys)
 			for _, v := range valSizes {
 				val := gen(v)
 				for _, builder := range builders {
 					benchmarks = append(benchmarks, Benchmark{
 						Parallelism:   p,
-						Key:           key,
+						Keys:          keys,
 						Val:           val,
 						TargetBuilder: builder,
 					})
@@ -59,7 +67,7 @@ func compose(parallelisms, keySizes, valSizes []int, builders []TargetBuilder) [
 func RunBenchmark(b *testing.B, benchmarks []Benchmark) {
 	for _, bench := range benchmarks {
 		bench := bench
-		b.Run(fmt.Sprintf("%s-parallelism(%d)-key(%d)-value(%d)", bench.TargetBuilder.Name, bench.Parallelism, len(bench.Key), len(bench.Val)), func(b *testing.B) {
+		b.Run(fmt.Sprintf("%s-parallelism(%d)-key(%d)-value(%d)", bench.TargetBuilder.Name, bench.Parallelism, len(bench.Keys[0]), len(bench.Val)), func(b *testing.B) {
 			target, err := bench.TargetBuilder.Make(bench)
 			if err != nil {
 				b.Fatalf("%s setup fail: %v", bench.TargetBuilder.Name, err)
@@ -68,7 +76,7 @@ func RunBenchmark(b *testing.B, benchmarks []Benchmark) {
 			b.ResetTimer()
 			b.RunParallel(func(pb *testing.PB) {
 				for pb.Next() {
-					if err := target.Do(bench.Key, bench.Val); err != nil {
+					if err := target.Do(bench.Keys, bench.Val); err != nil {
 						b.Errorf("%s error during benchmark: %v", bench.TargetBuilder.Name, err)
 					}
 				}

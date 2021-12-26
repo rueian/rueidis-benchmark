@@ -14,9 +14,10 @@ func BenchmarkSingleClientSet(b *testing.B) {
 	var (
 		ncpu         = runtime.NumCPU()
 		ctx          = context.Background()
-		address      = "127.0.0.1:6379"
+		address      = "127.0.0.1:7001"
 		parallelisms = []int{1, 8, 64}
 		keySizes     = []int{16}
+		numKeys      = 1
 		valSizes     = []int{64, 256, 1024}
 		builders     = []TargetBuilder{
 			{
@@ -31,8 +32,8 @@ func BenchmarkSingleClientSet(b *testing.B) {
 					}
 					return Target{
 						Close: func() { client.Close() },
-						Do: func(key, value string) error {
-							return client.Do(ctx, client.Cmd.Set().Key(key).Value(value).Build()).Error()
+						Do: func(keys []string, value string) error {
+							return client.Do(ctx, client.Cmd.Set().Key(keys[0]).Value(value).Build()).Error()
 						},
 					}, nil
 				},
@@ -46,8 +47,8 @@ func BenchmarkSingleClientSet(b *testing.B) {
 					}
 					return Target{
 						Close: func() { client.Close() },
-						Do: func(key, value string) error {
-							return client.Set(ctx, key, value, 0).Err()
+						Do: func(keys []string, value string) error {
+							return client.Set(ctx, keys[0], value, 0).Err()
 						},
 					}, nil
 				},
@@ -55,7 +56,7 @@ func BenchmarkSingleClientSet(b *testing.B) {
 		}
 	)
 
-	RunBenchmark(b, compose(parallelisms, keySizes, valSizes, builders))
+	RunBenchmark(b, compose(parallelisms, keySizes, valSizes, numKeys, builders))
 }
 
 func BenchmarkSingleClientGet(b *testing.B) {
@@ -65,6 +66,7 @@ func BenchmarkSingleClientGet(b *testing.B) {
 		address      = "127.0.0.1:6379"
 		parallelisms = []int{1, 8, 64}
 		keySizes     = []int{16}
+		numKeys      = 1
 		valSizes     = []int{64, 256, 1024}
 		builders     = []TargetBuilder{
 			{
@@ -77,13 +79,13 @@ func BenchmarkSingleClientGet(b *testing.B) {
 					if err := client.Do(ctx, client.Cmd.Flushall().Build()).Error(); err != nil {
 						return Target{}, err
 					}
-					if err := client.Do(ctx, client.Cmd.Set().Key(bench.Key).Value(bench.Val).Build()).Error(); err != nil {
+					if err := client.Do(ctx, client.Cmd.Set().Key(bench.Keys[0]).Value(bench.Val).Build()).Error(); err != nil {
 						return Target{}, err
 					}
 					return Target{
 						Close: func() { client.Close() },
-						Do: func(key, value string) error {
-							return client.DoCache(ctx, client.Cmd.Get().Key(key).Cache(), 10*time.Second).Error()
+						Do: func(keys []string, value string) error {
+							return client.DoCache(ctx, client.Cmd.Get().Key(keys[0]).Cache(), 10*time.Second).Error()
 						},
 					}, nil
 				},
@@ -98,13 +100,13 @@ func BenchmarkSingleClientGet(b *testing.B) {
 					if err := client.Do(ctx, client.Cmd.Flushall().Build()).Error(); err != nil {
 						return Target{}, err
 					}
-					if err := client.Do(ctx, client.Cmd.Set().Key(bench.Key).Value(bench.Val).Build()).Error(); err != nil {
+					if err := client.Do(ctx, client.Cmd.Set().Key(bench.Keys[0]).Value(bench.Val).Build()).Error(); err != nil {
 						return Target{}, err
 					}
 					return Target{
 						Close: func() { client.Close() },
-						Do: func(key, value string) error {
-							return client.Do(ctx, client.Cmd.Get().Key(key).Build()).Error()
+						Do: func(keys []string, value string) error {
+							return client.Do(ctx, client.Cmd.Get().Key(keys[0]).Build()).Error()
 						},
 					}, nil
 				},
@@ -116,13 +118,13 @@ func BenchmarkSingleClientGet(b *testing.B) {
 					if err := client.FlushAll(ctx).Err(); err != nil {
 						return Target{}, err
 					}
-					if err := client.Set(ctx, bench.Key, bench.Val, 0).Err(); err != nil {
+					if err := client.Set(ctx, bench.Keys[0], bench.Val, 0).Err(); err != nil {
 						return Target{}, err
 					}
 					return Target{
 						Close: func() { client.Close() },
-						Do: func(key, value string) error {
-							return client.Get(ctx, key).Err()
+						Do: func(keys []string, value string) error {
+							return client.Get(ctx, keys[0]).Err()
 						},
 					}, nil
 				},
@@ -130,5 +132,5 @@ func BenchmarkSingleClientGet(b *testing.B) {
 		}
 	)
 
-	RunBenchmark(b, compose(parallelisms, keySizes, valSizes, builders))
+	RunBenchmark(b, compose(parallelisms, keySizes, valSizes, numKeys, builders))
 }
