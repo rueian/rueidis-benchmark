@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"math/rand"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -30,9 +31,10 @@ type TargetBuilder struct {
 
 func BenchmarkSingleClient(b *testing.B) {
 	var (
+		ncpu         = runtime.NumCPU()
 		ctx          = context.Background()
 		address      = "127.0.0.1:6379"
-		parallelisms = []int{1, 8, 64, 128}
+		parallelisms = []int{1, 8, 64}
 		KeySizes     = []int{16}
 		valSizes     = []int{64, 256, 1024}
 		builders     = []TargetBuilder{
@@ -60,7 +62,7 @@ func BenchmarkSingleClient(b *testing.B) {
 			{
 				Name: "GoRedisSet",
 				Make: func() (Target, error) {
-					client := redis.NewClient(&redis.Options{Addr: address, PoolSize: parallelisms[len(parallelisms)-1]})
+					client := redis.NewClient(&redis.Options{Addr: address, PoolSize: parallelisms[len(parallelisms)-1] * ncpu})
 					if err := client.FlushAll(ctx).Err(); err != nil {
 						return Target{}, err
 					}
@@ -96,7 +98,7 @@ func BenchmarkSingleClient(b *testing.B) {
 
 	for _, bench := range benchmarks {
 		bench := bench
-		b.Run(fmt.Sprintf("%s-parallel(%d)-key(%d)-value(%d)", bench.TargetBuilder.Name, bench.Parallelism, len(bench.Key), len(bench.Val)), func(b *testing.B) {
+		b.Run(fmt.Sprintf("%s-parallelism(%d)-key(%d)-value(%d)", bench.TargetBuilder.Name, bench.Parallelism, len(bench.Key), len(bench.Val)), func(b *testing.B) {
 			target, err := bench.TargetBuilder.Make()
 			if err != nil {
 				b.Fatalf("%s setup fail: %v", bench.TargetBuilder.Name, err)
