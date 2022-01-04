@@ -23,17 +23,17 @@ func BenchmarkSingleClientSet(b *testing.B) {
 			{
 				Name: "Rueidis",
 				Make: func(bench Benchmark) (Target, error) {
-					client, err := rueidis.NewSingleClient(rueidis.SingleClientOption{Address: address})
+					client, err := rueidis.NewClient(rueidis.ClientOption{InitAddress: []string{address}})
 					if err != nil {
 						return Target{}, err
 					}
-					if err := client.Do(ctx, client.Cmd.Flushall().Build()).Error(); err != nil {
+					if err := client.Do(ctx, client.B().Flushall().Build()).Error(); err != nil {
 						return Target{}, err
 					}
 					return Target{
 						Close: func() { client.Close() },
 						Do: func(keys []string, value string) error {
-							return client.Do(ctx, client.Cmd.Set().Key(keys[0]).Value(value).Build()).Error()
+							return client.Do(ctx, client.B().Set().Key(keys[0]).Value(value).Build()).Error()
 						},
 					}, nil
 				},
@@ -72,20 +72,20 @@ func BenchmarkSingleClientGet(b *testing.B) {
 			{
 				Name: "RueidisCSC",
 				Make: func(bench Benchmark) (Target, error) {
-					client, err := rueidis.NewSingleClient(rueidis.SingleClientOption{Address: address})
+					client, err := rueidis.NewClient(rueidis.ClientOption{InitAddress: []string{address}})
 					if err != nil {
 						return Target{}, err
 					}
-					if err := client.Do(ctx, client.Cmd.Flushall().Build()).Error(); err != nil {
+					if err := client.Do(ctx, client.B().Flushall().Build()).Error(); err != nil {
 						return Target{}, err
 					}
-					if err := client.Do(ctx, client.Cmd.Set().Key(bench.Keys[0]).Value(bench.Val).Build()).Error(); err != nil {
+					if err := client.Do(ctx, client.B().Set().Key(bench.Keys[0]).Value(bench.Val).Build()).Error(); err != nil {
 						return Target{}, err
 					}
 					return Target{
 						Close: func() { client.Close() },
 						Do: func(keys []string, value string) error {
-							return client.DoCache(ctx, client.Cmd.Get().Key(keys[0]).Cache(), 10*time.Second).Error()
+							return client.DoCache(ctx, client.B().Get().Key(keys[0]).Cache(), 10*time.Second).Error()
 						},
 					}, nil
 				},
@@ -93,20 +93,20 @@ func BenchmarkSingleClientGet(b *testing.B) {
 			{
 				Name: "Rueidis",
 				Make: func(bench Benchmark) (Target, error) {
-					client, err := rueidis.NewSingleClient(rueidis.SingleClientOption{Address: address})
+					client, err := rueidis.NewClient(rueidis.ClientOption{InitAddress: []string{address}})
 					if err != nil {
 						return Target{}, err
 					}
-					if err := client.Do(ctx, client.Cmd.Flushall().Build()).Error(); err != nil {
+					if err := client.Do(ctx, client.B().Flushall().Build()).Error(); err != nil {
 						return Target{}, err
 					}
-					if err := client.Do(ctx, client.Cmd.Set().Key(bench.Keys[0]).Value(bench.Val).Build()).Error(); err != nil {
+					if err := client.Do(ctx, client.B().Set().Key(bench.Keys[0]).Value(bench.Val).Build()).Error(); err != nil {
 						return Target{}, err
 					}
 					return Target{
 						Close: func() { client.Close() },
 						Do: func(keys []string, value string) error {
-							return client.Do(ctx, client.Cmd.Get().Key(keys[0]).Build()).Error()
+							return client.Do(ctx, client.B().Get().Key(keys[0]).Build()).Error()
 						},
 					}, nil
 				},

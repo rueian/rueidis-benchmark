@@ -23,17 +23,17 @@ func BenchmarkClusterClientSet(b *testing.B) {
 			{
 				Name: "Rueidis",
 				Make: func(bench Benchmark) (Target, error) {
-					client, err := rueidis.NewClusterClient(rueidis.ClusterClientOption{InitAddress: addresses})
+					client, err := rueidis.NewClient(rueidis.ClientOption{InitAddress: addresses})
 					if err != nil {
 						return Target{}, err
 					}
-					if err := client.Do(ctx, client.Cmd.Flushall().Build()).Error(); err != nil {
+					if err := client.Do(ctx, client.B().Flushall().Build()).Error(); err != nil {
 						return Target{}, err
 					}
 					return Target{
 						Close: func() { client.Close() },
 						Do: func(keys []string, value string) error {
-							return client.Do(ctx, client.Cmd.Set().Key(keys[fastrand.Uint32n(uint32(len(keys)))]).Value(value).Build()).Error()
+							return client.Do(ctx, client.B().Set().Key(keys[fastrand.Uint32n(uint32(len(keys)))]).Value(value).Build()).Error()
 						},
 					}, nil
 				},
