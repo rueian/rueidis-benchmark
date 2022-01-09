@@ -44,8 +44,10 @@ func (r *ring) Read() []byte {
 	r.read1++
 	p := r.read1 & r.mask
 	n := &r.store[p]
-	if atomic.CompareAndSwapUint32(&n.mark, 2, 0) {
-		return n.val
+	if atomic.LoadUint32(&n.mark) == 2 {
+		v := n.val
+		atomic.StoreUint32(&n.mark, 0)
+		return v
 	}
 	r.read1--
 	return nil
