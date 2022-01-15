@@ -15,7 +15,7 @@ func BenchmarkClusterClientSet(b *testing.B) {
 		ncpu         = runtime.NumCPU()
 		ctx          = context.Background()
 		addresses    = []string{"127.0.0.1:7001", "127.0.0.1:7002", "127.0.0.1:7003"}
-		parallelisms = []int{1, 8, 64}
+		parallelisms = []int{4, 16, 96}
 		keySizes     = []int{16}
 		numKeys      = 1024
 		valSizes     = []int{64, 256, 1024}
