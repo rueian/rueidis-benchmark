@@ -4,7 +4,7 @@ go 1.17
 
 require (
 	github.com/go-redis/redis/v8 v8.11.4
-	github.com/rueian/rueidis v0.0.19
+	github.com/rueian/rueidis v0.0.24
 	github.com/valyala/fastrand v1.1.0
 )
 
