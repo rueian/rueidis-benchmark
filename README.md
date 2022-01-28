@@ -1,4 +1,5 @@
 # Rueidis Benchmark
+This is a benchmark repository for https://github.com/rueian/rueidis
 
 ## Benchmark comparison with go-redis v8.11.4
 
