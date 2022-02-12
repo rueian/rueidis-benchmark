@@ -73,15 +73,24 @@ func RunBenchmark(b *testing.B, benchmarks []Benchmark) {
 			if err != nil {
 				b.Fatalf("%s setup fail: %v", bench.TargetBuilder.Name, err)
 			}
-			b.SetParallelism(bench.Parallelism)
-			b.ResetTimer()
-			b.RunParallel(func(pb *testing.PB) {
-				for pb.Next() {
+			if bench.Parallelism == 0 {
+				b.ResetTimer()
+				for i := 0; i < b.N; i++ {
 					if err := target.Do(bench.Keys, bench.Val); err != nil {
 						b.Errorf("%s error during benchmark: %v", bench.TargetBuilder.Name, err)
 					}
 				}
-			})
+			} else {
+				b.SetParallelism(bench.Parallelism)
+				b.ResetTimer()
+				b.RunParallel(func(pb *testing.PB) {
+					for pb.Next() {
+						if err := target.Do(bench.Keys, bench.Val); err != nil {
+							b.Errorf("%s error during benchmark: %v", bench.TargetBuilder.Name, err)
+						}
+					}
+				})
+			}
 			b.StopTimer()
 			target.Close()
 		})
