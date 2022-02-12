@@ -2,12 +2,23 @@ package ring
 
 import (
 	"runtime"
-	"sync"
 	"sync/atomic"
 	"testing"
 )
 
-const size = 4096
+const size = 1024
+const mask = size - 1
+
+type request struct {
+	ch chan response
+}
+type response struct{}
+
+type PipeliningQueue interface {
+	EnqueueRequest(req request) chan response
+	NextRequestToSend() (req request, ok bool)
+	ReplyToNextRequest(response)
+}
 
 type ring struct {
 	_     [8]uint64
@@ -15,82 +26,132 @@ type ring struct {
 	_     [7]uint64
 	read1 uint64
 	_     [7]uint64
-	mask  uint64
+	read2 uint64
 	_     [7]uint64
-	store [size]node
+	slots [size]slot
 }
 
-type node struct {
+type slot struct {
 	mark uint32
-	val  []byte
+	req  request
+	ch   chan response
 }
 
-type nop struct{}
-
-func (n nop) Lock() {}
-
-func (n nop) Unlock() {}
-
-func (r *ring) Put(val []byte) {
-	n := &r.store[atomic.AddUint64(&r.write, 1)&r.mask]
-	for !atomic.CompareAndSwapUint32(&n.mark, 0, 1) {
+func (r *ring) EnqueueRequest(req request) chan response {
+	s := &r.slots[atomic.AddUint64(&r.write, 1)&mask]
+	for atomic.CompareAndSwapUint32(&s.mark, 0, 1) {
 		runtime.Gosched()
 	}
-	n.val = val
-	atomic.StoreUint32(&n.mark, 2)
+	s.req = req
+	atomic.StoreUint32(&s.mark, 2)
+	return s.ch
 }
 
-func (r *ring) Read() []byte {
-	r.read1++
-	p := r.read1 & r.mask
-	n := &r.store[p]
-	if atomic.LoadUint32(&n.mark) == 2 {
-		v := n.val
-		atomic.StoreUint32(&n.mark, 0)
-		return v
+func (r *ring) NextRequestToSend() (req request, ok bool) {
+	s := &r.slots[(r.read1+1)&mask]
+	if ok = atomic.LoadUint32(&s.mark) == 2; ok {
+		req = s.req
+		r.read1++
+		atomic.StoreUint32(&s.mark, 3)
 	}
-	r.read1--
-	return nil
+	return
+}
+
+func (r *ring) ReplyToNextRequest(resp response) {
+	r.read2++
+	s := &r.slots[r.read2&mask]
+	if atomic.LoadUint32(&s.mark) != 3 {
+		r.read2--
+	} else {
+		atomic.StoreUint32(&s.mark, 0)
+	}
 }
 
 func newRing() *ring {
 	r := &ring{}
-	r.mask = uint64(len(r.store) - 1)
+	for i := range r.slots {
+		r.slots[i] = slot{ch: make(chan response, 0)}
+	}
 	return r
 }
 
-func BenchmarkRing(b *testing.B) {
-	val := make([]byte, 0)
-	b.Run("ring", func(b *testing.B) {
-		s := int32(0)
-		c := sync.NewCond(nop{})
-		r := newRing()
+type double struct {
+	writing chan request
+	waiting chan request
+}
+
+func (d *double) EnqueueRequest(req request) chan response {
+	req.ch = make(chan response, 1)
+	d.writing <- req
+	return req.ch
+}
+
+func (d *double) NextRequestToSend() (req request, ok bool) {
+	select {
+	case req, ok = <-d.writing:
+	default:
+		return request{}, false
+	}
+	if ok {
+		d.waiting <- req
+	}
+	return
+}
+
+func (d *double) ReplyToNextRequest(r response) {
+	<-d.waiting
+}
+
+func newDouble() *double {
+	return &double{
+		writing: make(chan request, size/2),
+		waiting: make(chan request, size/2),
+	}
+}
+
+func BenchmarkPipeliningQueue(b *testing.B) {
+	bench := func(queue PipeliningQueue) (func(), func()) {
+		stop := int32(0)
 		go func() {
-			for atomic.LoadInt32(&s) == 0 {
-				if r.Read() == nil {
-					c.Wait()
+			for atomic.LoadInt32(&stop) == 0 {
+				if _, ok := queue.NextRequestToSend(); ok {
+					queue.ReplyToNextRequest(response{})
+				} else {
+					runtime.Gosched()
 				}
 			}
 		}()
-		b.StartTimer()
-		for i := 0; i < b.N; i++ {
-			r.Put(val)
-			c.Broadcast()
-		}
-		b.StartTimer()
-		atomic.StoreInt32(&s, 1)
-	})
-	b.Run("chan", func(b *testing.B) {
-		c := make(chan []byte, size)
-		go func() {
-			for range c {
+		return func() {
+				_ = queue.EnqueueRequest(request{})
+			}, func() {
+				if d, ok := queue.(*double); ok {
+					close(d.writing)
+				}
+				atomic.StoreInt32(&stop, 1)
 			}
-		}()
-		b.StartTimer()
-		for i := 0; i < b.N; i++ {
-			c <- val
-		}
+	}
+	b.Run("Lockless", func(b *testing.B) {
+		fn, cancel := bench(newRing())
+		b.SetParallelism(64)
+		b.ResetTimer()
+		b.RunParallel(func(pb *testing.PB) {
+			for pb.Next() {
+				fn()
+			}
+		})
 		b.StopTimer()
-		close(c)
+		cancel()
+	})
+	b.Run("Channel", func(b *testing.B) {
+		fn, cancel := bench(newDouble())
+		b.SetParallelism(64)
+		b.ResetTimer()
+		b.RunParallel(func(pb *testing.PB) {
+			for pb.Next() {
+				fn()
+			}
+		})
+		b.StopTimer()
+		cancel()
 	})
 }
