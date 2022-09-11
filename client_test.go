@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/go-redis/redis/v8"
+	"github.com/go-redis/redis/v9"
 	"github.com/rueian/rueidis"
 )
 
@@ -70,7 +70,7 @@ func BenchmarkSingleClientGet(b *testing.B) {
 		valSizes     = []int{64, 256, 1024}
 		builders     = []TargetBuilder{
 			{
-				Name: "RueidisCSC",
+				Name: "RueiCSC",
 				Make: func(bench Benchmark) (Target, error) {
 					client, err := rueidis.NewClient(rueidis.ClientOption{InitAddress: []string{address}})
 					if err != nil {
