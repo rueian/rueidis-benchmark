@@ -3,8 +3,8 @@ module rueidis-benchmark
 go 1.19
 
 require (
-	github.com/go-redis/redis/v9 v9.0.0-beta.2
-	github.com/rueian/rueidis v0.0.76
+	github.com/go-redis/redis/v9 v9.0.0-rc.2
+	github.com/rueian/rueidis v0.0.90
 	github.com/valyala/fastrand v1.1.0
 )
 
