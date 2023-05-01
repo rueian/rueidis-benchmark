@@ -7,7 +7,7 @@ import (
 	"time"
 
 	redis "github.com/redis/go-redis/v9"
-	"github.com/rueian/rueidis"
+	"github.com/redis/rueidis"
 )
 
 func BenchmarkSingleClientSet(b *testing.B) {

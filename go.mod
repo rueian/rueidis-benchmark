@@ -4,7 +4,7 @@ go 1.19
 
 require (
 	github.com/redis/go-redis/v9 v9.0.3
-	github.com/rueian/rueidis v0.0.99
+	github.com/redis/rueidis v1.0.0-go1.18
 	github.com/valyala/fastrand v1.1.0
 )
 

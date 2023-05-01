@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	redis "github.com/redis/go-redis/v9"
-	"github.com/rueian/rueidis"
+	"github.com/redis/rueidis"
 	"github.com/valyala/fastrand"
 )
 
