@@ -8,6 +8,7 @@ import (
 
 	"github.com/redis/go-redis/v9"
 	"github.com/redis/rueidis"
+	"github.com/valkey-io/valkey-glide/go/api"
 )
 
 var lib = flag.String("lib", "", "lib to benchmark")
@@ -17,7 +18,7 @@ func Benchmark(b *testing.B) {
 		var (
 			ctx      = context.Background()
 			keySizes = []int{16}
-			valSizes = []int{64, 256, 1024}
+			valSizes = []int{64, 256}
 			builders = []TargetBuilder{
 				{
 					Name: "Set",
@@ -32,6 +33,22 @@ func Benchmark(b *testing.B) {
 								Close: func() { client.Close() },
 								Do: func(key string, value string) error {
 									return client.Set(ctx, key, value, 0).Err()
+								},
+							}, nil
+						case "glide":
+							config := api.NewGlideClientConfiguration().WithAddress(&api.NodeAddress{Host: "127.0.0.1", Port: 6379})
+							client, err := api.NewGlideClient(config)
+							if err != nil {
+								return Target{}, err
+							}
+							if _, err := client.CustomCommand([]string{"FLUSHALL"}); err != nil {
+								return Target{}, err
+							}
+							return Target{
+								Close: func() { client.Close() },
+								Do: func(key string, value string) error {
+									_, err := client.Set(key, value)
+									return err
 								},
 							}, nil
 						default:
@@ -67,6 +84,25 @@ func Benchmark(b *testing.B) {
 								Close: func() { client.Close() },
 								Do: func(key string, value string) error {
 									return client.Get(ctx, key).Err()
+								},
+							}, nil
+						case "glide":
+							config := api.NewGlideClientConfiguration().WithAddress(&api.NodeAddress{Host: "127.0.0.1", Port: 6379})
+							client, err := api.NewGlideClient(config)
+							if err != nil {
+								return Target{}, err
+							}
+							if _, err := client.CustomCommand([]string{"FLUSHALL"}); err != nil {
+								return Target{}, err
+							}
+							if _, err := client.Set(bench.Key, bench.Val); err != nil {
+								return Target{}, err
+							}
+							return Target{
+								Close: func() { client.Close() },
+								Do: func(key string, value string) error {
+									_, err := client.Get(key)
+									return err
 								},
 							}, nil
 						default:
