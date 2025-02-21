@@ -3,6 +3,8 @@ package rueidis_benchmark
 import (
 	"context"
 	"flag"
+	"net"
+	"strconv"
 	"testing"
 	"time"
 
@@ -36,18 +38,39 @@ func Benchmark(b *testing.B) {
 								},
 							}, nil
 						case "glide":
-							config := api.NewGlideClientConfiguration().WithAddress(&api.NodeAddress{Host: "127.0.0.1", Port: 6379})
-							client, err := api.NewGlideClient(config)
-							if err != nil {
-								return Target{}, err
-							}
-							if _, err := client.CustomCommand([]string{"FLUSHALL"}); err != nil {
-								return Target{}, err
+							var base api.BaseClient
+							if len(address) == 1 {
+								host, port, _ := net.SplitHostPort(address[0])
+								portInt, _ := strconv.Atoi(port)
+								config := api.NewGlideClientConfiguration().WithAddress(&api.NodeAddress{Host: host, Port: portInt})
+								client, err := api.NewGlideClient(config)
+								if err != nil {
+									return Target{}, err
+								}
+								if _, err := client.CustomCommand([]string{"FLUSHALL"}); err != nil {
+									return Target{}, err
+								}
+								base = client
+							} else {
+								config := api.NewGlideClusterClientConfiguration()
+								for _, address := range address {
+									host, port, _ := net.SplitHostPort(address)
+									portInt, _ := strconv.Atoi(port)
+									config = config.WithAddress(&api.NodeAddress{Host: host, Port: portInt})
+								}
+								client, err := api.NewGlideClusterClient(config)
+								if err != nil {
+									return Target{}, err
+								}
+								if _, err := client.CustomCommand([]string{"FLUSHALL"}); err != nil {
+									return Target{}, err
+								}
+								base = client
 							}
 							return Target{
-								Close: func() { client.Close() },
+								Close: func() { base.Close() },
 								Do: func(key string, value string) error {
-									_, err := client.Set(key, value)
+									_, err := base.Set(key, value)
 									return err
 								},
 							}, nil
@@ -87,21 +110,42 @@ func Benchmark(b *testing.B) {
 								},
 							}, nil
 						case "glide":
-							config := api.NewGlideClientConfiguration().WithAddress(&api.NodeAddress{Host: "127.0.0.1", Port: 6379})
-							client, err := api.NewGlideClient(config)
-							if err != nil {
-								return Target{}, err
+							var base api.BaseClient
+							if len(address) == 1 {
+								host, port, _ := net.SplitHostPort(address[0])
+								portInt, _ := strconv.Atoi(port)
+								config := api.NewGlideClientConfiguration().WithAddress(&api.NodeAddress{Host: host, Port: portInt})
+								client, err := api.NewGlideClient(config)
+								if err != nil {
+									return Target{}, err
+								}
+								if _, err := client.CustomCommand([]string{"FLUSHALL"}); err != nil {
+									return Target{}, err
+								}
+								base = client
+							} else {
+								config := api.NewGlideClusterClientConfiguration()
+								for _, address := range address {
+									host, port, _ := net.SplitHostPort(address)
+									portInt, _ := strconv.Atoi(port)
+									config = config.WithAddress(&api.NodeAddress{Host: host, Port: portInt})
+								}
+								client, err := api.NewGlideClusterClient(config)
+								if err != nil {
+									return Target{}, err
+								}
+								if _, err := client.CustomCommand([]string{"FLUSHALL"}); err != nil {
+									return Target{}, err
+								}
+								base = client
 							}
-							if _, err := client.CustomCommand([]string{"FLUSHALL"}); err != nil {
-								return Target{}, err
-							}
-							if _, err := client.Set(bench.Key, bench.Val); err != nil {
+							if _, err := base.Set(bench.Key, bench.Val); err != nil {
 								return Target{}, err
 							}
 							return Target{
-								Close: func() { client.Close() },
+								Close: func() { base.Close() },
 								Do: func(key string, value string) error {
-									_, err := client.Get(key)
+									_, err := base.Get(key)
 									return err
 								},
 							}, nil
