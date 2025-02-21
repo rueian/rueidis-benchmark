@@ -8,3 +8,6 @@ go test -bench="Benchmark/.*/Get" -benchmem -benchtime=100000x -count=10 -lib=ru
 go test -bench="Benchmark/.*/Get" -benchmem -benchtime=100000x -count=10 -lib=rueicsc . | tee get-4-rueidiscsc.txt
 go test -bench="Benchmark/.*/Get" -benchmem -benchtime=100000x -count=10 -lib=goredis . | tee get-1-goredis.txt
 go test -bench="Benchmark/.*/Get" -benchmem -benchtime=100000x -count=10 -lib=glide . | tee get-2-glide.txt
+
+benchstat set* | python chart.py > set.png
+benchstat get* | python chart.py > get.png
