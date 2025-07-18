@@ -10,10 +10,18 @@ import (
 
 	"github.com/redis/go-redis/v9"
 	"github.com/redis/rueidis"
-	"github.com/valkey-io/valkey-glide/go/api"
+	"github.com/valkey-io/valkey-glide/go/v2"
+	"github.com/valkey-io/valkey-glide/go/v2/config"
+	"github.com/valkey-io/valkey-glide/go/v2/models"
 )
 
 var lib = flag.String("lib", "", "lib to benchmark")
+
+type glidecmd interface {
+	Set(ctx context.Context, key string, value string) (string, error)
+	Get(ctx context.Context, key string) (models.Result[string], error)
+	Close()
+}
 
 func Benchmark(b *testing.B) {
 	bench := func(b *testing.B, address []string, parallelisms []int) {
@@ -38,31 +46,31 @@ func Benchmark(b *testing.B) {
 								},
 							}, nil
 						case "glide":
-							var base api.BaseClient
+							var base glidecmd
 							if len(address) == 1 {
 								host, port, _ := net.SplitHostPort(address[0])
 								portInt, _ := strconv.Atoi(port)
-								config := api.NewGlideClientConfiguration().WithAddress(&api.NodeAddress{Host: host, Port: portInt})
-								client, err := api.NewGlideClient(config)
+								cfg := config.NewClientConfiguration().WithAddress(&config.NodeAddress{Host: host, Port: portInt})
+								client, err := glide.NewClient(cfg)
 								if err != nil {
 									return Target{}, err
 								}
-								if _, err := client.CustomCommand([]string{"FLUSHALL"}); err != nil {
+								if _, err := client.FlushAll(context.Background()); err != nil {
 									return Target{}, err
 								}
 								base = client
 							} else {
-								config := api.NewGlideClusterClientConfiguration()
+								cfg := config.NewClusterClientConfiguration()
 								for _, address := range address {
 									host, port, _ := net.SplitHostPort(address)
 									portInt, _ := strconv.Atoi(port)
-									config = config.WithAddress(&api.NodeAddress{Host: host, Port: portInt})
+									cfg = cfg.WithAddress(&config.NodeAddress{Host: host, Port: portInt})
 								}
-								client, err := api.NewGlideClusterClient(config)
+								client, err := glide.NewClusterClient(cfg)
 								if err != nil {
 									return Target{}, err
 								}
-								if _, err := client.CustomCommand([]string{"FLUSHALL"}); err != nil {
+								if _, err := client.FlushAll(context.Background()); err != nil {
 									return Target{}, err
 								}
 								base = client
@@ -70,7 +78,7 @@ func Benchmark(b *testing.B) {
 							return Target{
 								Close: func() { base.Close() },
 								Do: func(key string, value string) error {
-									_, err := base.Set(key, value)
+									_, err := base.Set(context.Background(), key, value)
 									return err
 								},
 							}, nil
@@ -110,42 +118,42 @@ func Benchmark(b *testing.B) {
 								},
 							}, nil
 						case "glide":
-							var base api.BaseClient
+							var base glidecmd
 							if len(address) == 1 {
 								host, port, _ := net.SplitHostPort(address[0])
 								portInt, _ := strconv.Atoi(port)
-								config := api.NewGlideClientConfiguration().WithAddress(&api.NodeAddress{Host: host, Port: portInt})
-								client, err := api.NewGlideClient(config)
+								cfg := config.NewClientConfiguration().WithAddress(&config.NodeAddress{Host: host, Port: portInt})
+								client, err := glide.NewClient(cfg)
 								if err != nil {
 									return Target{}, err
 								}
-								if _, err := client.CustomCommand([]string{"FLUSHALL"}); err != nil {
+								if _, err := client.FlushAll(context.Background()); err != nil {
 									return Target{}, err
 								}
 								base = client
 							} else {
-								config := api.NewGlideClusterClientConfiguration()
+								cfg := config.NewClusterClientConfiguration()
 								for _, address := range address {
 									host, port, _ := net.SplitHostPort(address)
 									portInt, _ := strconv.Atoi(port)
-									config = config.WithAddress(&api.NodeAddress{Host: host, Port: portInt})
+									cfg = cfg.WithAddress(&config.NodeAddress{Host: host, Port: portInt})
 								}
-								client, err := api.NewGlideClusterClient(config)
+								client, err := glide.NewClusterClient(cfg)
 								if err != nil {
 									return Target{}, err
 								}
-								if _, err := client.CustomCommand([]string{"FLUSHALL"}); err != nil {
+								if _, err := client.FlushAll(context.Background()); err != nil {
 									return Target{}, err
 								}
 								base = client
 							}
-							if _, err := base.Set(bench.Key, bench.Val); err != nil {
+							if _, err := base.Set(context.Background(), bench.Key, bench.Val); err != nil {
 								return Target{}, err
 							}
 							return Target{
 								Close: func() { base.Close() },
 								Do: func(key string, value string) error {
-									_, err := base.Get(key)
+									_, err := base.Get(context.Background(), key)
 									return err
 								},
 							}, nil
@@ -183,9 +191,9 @@ func Benchmark(b *testing.B) {
 		RunBenchmark(b, compose(parallelisms, keySizes, valSizes, builders))
 	}
 	b.Run("OneNode", func(b *testing.B) {
-		bench(b, []string{"127.0.0.1:6379"}, []int{1, 8, 64})
+		bench(b, []string{"127.0.0.1:6379"}, []int{0, 1, 8, 64})
 	})
 	b.Run("Cluster", func(b *testing.B) {
-		bench(b, []string{"127.0.0.1:7001", "127.0.0.1:7002", "127.0.0.1:7003"}, []int{1, 8, 64})
+		bench(b, []string{"127.0.0.1:7001", "127.0.0.1:7002", "127.0.0.1:7003"}, []int{0, 1, 8, 64})
 	})
 }
